@@ -1,5 +1,3 @@
-# 1. 填充 README.md
-cat > /home/moom/sift-self-correction-agent/README.md << 'EOF'
 # SIFT Self-Correction Agent
 
 A Protocol SIFT extension that teaches the AI analyst to double-check its own work — reducing hallucinations and making automated DFIR results more trustworthy.
