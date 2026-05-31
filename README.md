@@ -80,7 +80,28 @@ Cheng Lin — Solo Participant, FIND EVIL! 2026
 
 License
 MIT — see LICENSE file
-EOF
+
+## Limitations & Future Work
+
+### Known Limitations
+
+1. **Prompt-Level Guardrails**: The current architecture uses prompt-based restrictions to enforce read-only tool usage. While the Agent confirmed no write commands were executed during testing, a maliciously crafted prompt could theoretically bypass these restrictions. This is honestly documented in the accuracy report.
+
+2. **Single-Agent Architecture**: The current implementation uses a single Agent for both analysis and self-review. A multi-agent architecture — where one agent analyzes and a second independently verifies — could provide stronger separation of concerns.
+
+3. **Skipped Analyses**: Three analysis dimensions (Event Logs, memory analysis via Volatility, and Prefetch timestamps) were skipped per stop-loss rules. Memory analysis was blocked by missing Windows ISF symbol files (symbol server returned HTTP 204). Registry hive analysis was completed in a supplementary update (2026-05-31). These gaps are honestly recorded.
+
+4. **Manual SSH Setup**: The current workflow requires manual SSH configuration. Future versions could automate the connection setup through MCP-based agent-to-workstation integration.
+
+### Planned Improvements
+
+1. **Custom MCP Server Architecture**: Migrate from Direct Agent Extension to a Custom MCP Server. This would expose only type-safe, read-only forensic functions — making evidence spoliation architecturally impossible rather than prompt-dependent.
+
+2. **Multi-Agent Decomposition**: Implement a two-agent system: Analyzer Agent + Verifier Agent. The Verifier independently checks the Analyzer's findings, providing stronger self-correction guarantees.
+
+3. **Expanded Analysis Coverage**: Complete Event Log parsing, Volatility memory analysis (once symbol files are available), and Prefetch timestamp extraction.
+
+4. **Automated Evidence Integrity Verification**: Add cryptographic hashing of evidence files before and after analysis to provide tamper-proof chain of custody documentation.
 
 ## Demo Video
 🎥 [Watch the 5-minute demo](https://youtube.com/placeholder) *(link coming soon)*
