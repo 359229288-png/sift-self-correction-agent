@@ -104,7 +104,7 @@ This project uses **Direct Agent Extension** architecture. The Agent executes co
 | Item | Attempts | Reason | Impact Assessment |
 | :--- | :--- | :--- | :--- |
 | Volatility3 Memory Analysis | 2 | Windows ISF symbol file missing; online server unreachable (HTTP 204) | Unable to confirm network connections and process tree, limiting verification of "how exfiltration occurred" in the attack chain |
-| Registry Hives (NTUSER.DAT) | 1 | Time constraints; prioritized MFT/Prefetch/Recycle Bin | Unable to extract user activity timeline and program execution history |
+| Registry Hives (NTUSER.DAT) | 1 | ~~Time constraints~~ **Completed in supplementary analysis (2026-05-31)** | Found evidence of SRL files copied to external F: drive, PST email exports, network drive mappings, iSCSI connections — **confirmed data exfiltration** |
 | Event Logs | 1 | Time constraints | Unable to verify RDP connection source and login activity |
 | Prefetch Execution Timestamps | 2 | MFT record number and inode mismatch | Unable to precisely determine execution times for SDelete and other programs |
 

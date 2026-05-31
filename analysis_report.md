@@ -348,3 +348,54 @@ Agent: main | Model: deepseek-chat | Provider: custom-api-deepseek-com
 - SDelete执行（安全擦除）
 - Netsh执行（网络配置）
 - Schtasks执行（可能的后门持久化）
+---
+
+## 附录：Registry Hive 补充分析（2026-05-31 更新）
+
+此前因止损规则跳过的 Registry 分析已完成。以下为从 `NTUSER.DAT`（fredr 用户）提取的关键发现：
+
+### 最近访问的文件
+
+从 Shell Bags / MRU 提取到多个重要文档路径，证实 SRL 项目文件已被复制到外部存储：
+
+- `F:\Files from SRL system\The Future of KITT.pptx`
+- `F:\Files of interest\SRL-Projects - Megaforce`
+- `F:\Files of interest\Recovered Documents\Wolves_Lair_Tech_Specs.pptx`
+- `G:\My Drive\STARK-RESEARCH-LABS FOLDER`
+
+关键文档名：
+- `SRL-EMAIL-EXPORT.pst` / `backup.pst` — Outlook PST 邮件导出
+- `Research to Weaponize the Ion Thruster.docx`
+- `GunStar Death Blossom Data.docx`
+- `The Future of KITT.pptx`
+- `Vibrainium(1).doc` / `Vibrainium - SRL.docx`
+- `Wolf AIr Financials.xlsx`
+
+### 用户程序执行记录
+
+从 UserAssist 确认以下程序执行：
+- `cmd.exe`, `powershell.exe`, `regedit.exe` — 命令行工具
+- `mstsc.exe` — RDP 远程桌面（**确认**）
+- `iscsicpl.exe` — iSCSI 发起程序（网络存储连接）
+- Zoom, Teams, Slack, Chrome, Firefox — 正常办公软件
+- GoogleDriveSync, Dropbox, iCloud 全线服务
+
+### 网络驱动器映射
+
+- `E:\New Homework\` — 外部 USB
+- `F:\Files from SRL system\` — 外部 SRL 文件副本
+- `F:\Files of interest\` — 更多 SRL 项目文件
+- `G:\` — Google Drive 映射为盘符
+
+### 云/账号信息
+
+- 邮箱：`fred.rocba@outlook.com`, `frocba@stark-research-labs.com`, `fred.rocba@gmail.com`
+- SharePoint：4 个 SRL 项目站点同步中（Airwolf, Blue Thunder, Gunstar, Megaforce）
+- Azure AD 租户 ID：`f91eb2ca-e46d-44b6-814b-d4bbacdc5a48`
+- Maria Hill 和 Timothy Dungan 的 OneDrive 也被共享访问
+
+### 结论更新
+
+Registry 分析**确认了之前的推断** — SRL 项目文件不仅通过云同步可访问，而且已被复制到 **F: 盘（外部介质）**。结合 PST 邮件导出文件的存在，数据窃取路径更加清晰。
+
+**证据等级更新**：从"高度确信"升级为 **"确认"**。
