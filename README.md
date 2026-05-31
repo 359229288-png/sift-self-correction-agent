@@ -62,12 +62,12 @@ This project uses **Direct Agent Extension** architecture:
 7. Run analysis
     Instruct your agent to SSH to SIFT and analyze the case data in /cases/.
 
-Key Features
+## Key Features
  ·Self-Correction Loop: Agent checks its own findings for hallucinations, inconsistencies, and missed artifacts before finalizing a report.
  ·Honest Uncertainty: Confirmed findings are clearly distinguished from inferences; skipped analyses are honestly recorded.
  ·Experimental Methodology: Inspired by data science competition workflows — control variables, baseline comparison, iterative testing.
 
-Built With
+## Built With
  ·OpenClaw (Agent Framework)
  ·SIFT Workstation (Forensic Platform)
  ·Protocol SIFT (AI-DFIR Integration)
@@ -75,11 +75,11 @@ Built With
  ·Python (pptx parsing, data extraction)
  ·Bash
 
-Author
-Cheng Lin — Solo Participant, FIND EVIL! 2026
+## Author
+  Cheng Lin — Solo Participant, FIND EVIL! 2026
 
-License
-MIT — see LICENSE file
+## License
+  MIT — see LICENSE file
 
 ## Limitations & Future Work
 
