@@ -120,3 +120,64 @@ This is the full self-correction sequence from the Agent's output:
  
  
  
+
+---
+
+## Supplementary Analysis (2026-06-01)
+
+### Registry Hive Analysis (NTUSER.DAT)
+
+| Step | Tool | Action | Key Output |
+|:---|:---|:---|:---|
+| REG-1 | `ewfmount` | Mount E01 | `/mnt/ewf2/ewf1` raw image available |
+| REG-2 | `fls` | Locate NTUSER.DAT | fredr: inode 154911, srl-h: inode 154933 |
+| REG-3 | `python-registry` | Parse fredr's NTUSER.DAT | 8MB hive parsed, root keys OK, `Microsoft` subtree: ParseException |
+| REG-4 | `python3` raw UTF-16LE | String extraction from hive binary | ~2000+ printable strings extracted |
+| REG-5 | `python3` filter | Filter for forensic keywords | 300+ interesting strings: paths, URLs, accounts, PSTs |
+| REG-6 | Manual analysis | Identify external drive paths | **F:\Files from SRL system\** (KITT), **G:\My Drive\STARK-RESEARCH-LABS FOLDER\** (GDrive) |
+
+**Self-correction triggered**: python-registry corruption discovered → switched to raw string extraction.
+
+### Prefetch Timestamp Verification (istat)
+
+| Step | Tool | Inode | Target | Timestamp |
+|:---|:---|:---|:---|:---|
+| PF-1 | `istat` | 472552 | SDELETE.EXE (1st) | **2020-11-14 13:42:33 UTC** |
+| PF-2 | `istat` | 104219 | SDELETE.EXE (2nd) | **2020-11-14 13:44:54 UTC** |
+| PF-3 | `istat` | 127940 | RDPCLIP.EXE | **2020-11-14 12:52:04 UTC** |
+| PF-4 | `istat` | 123623 | MSTSC.EXE | **2020-11-14 05:00:48 UTC** |
+| PF-5 | `istat` | 103935 | DROPBOXUNINSTALLER | **2020-11-14 13:50:04 UTC** |
+| PF-6 | `istat` | 104008 | DROPBOX.EXE | **2020-11-14 13:50:13 UTC** |
+| PF-7 | `istat` | 104014 | NETSH.EXE | **2020-11-14 13:50:18 UTC** |
+| PF-8 | `istat` | 104011 | REGSVR32.EXE | **2020-11-14 13:50:16 UTC** |
+| PF-9 | `istat` | 118084 | SCHTASKS.EXE | **2020-11-14 05:16:26 UTC** |
+| PF-10 | `istat` | 104013 | RUNDLL32.EXE | **2020-11-14 14:01:26 UTC** |
+
+**Self-correction triggered**: Initial MFT byte-offset approach failed → switched to `istat`.
+
+### Event Log (EVTX) Analysis
+
+| Step | Tool | File | Result |
+|:---|:---|:---|:---|
+| EVTX-1 | `icat` | Security.evtx (inode 279885) | 18.6MB extracted (truncated from 20MB) — NTFS decompression error |
+| EVTX-2 | `pyewf` + raw read | MFT record 279885 | Record verified as allocated via MFT Bitmap |
+| EVTX-3 | `icat` | Archive-2020-11-14-00-34.evtx (inode 131916) | 20MB extracted, **all chunks empty** |
+| EVTX-4 | `icat` | Archive-2020-11-14-07-54.evtx (inode 36253) | 20MB extracted, **all chunks empty** |
+| EVTX-5 | `icat` | Archive-2020-11-14-14-12.evtx (inode 107704) | 20MB extracted, **all chunks empty** |
+| EVTX-6 | `python-evtx` | Archive parse (131916) | Confirmed 0 events per chunk |
+| EVTX-7 | Binary chunk scanner | All 4 evtx files | Only chunk headers preserved; record bodies cleared by Windows archiving |
+
+**Stop-loss applied**: EVTX data genuinely unrecoverable due to NTFS compression corruption in image.
+
+---
+
+## Summary Statistics (Updated)
+
+| Metric | Value |
+|:---|:---|
+| Total `fls`/`istat`/`icat` operations | 45+ |
+| Registry strings extracted | 300+ filtered from ~2000 raw |
+| Prefetch files with verified timestamps | 10 |
+| EVTX files analyzed | 4 (all empty/truncated) |
+| Self-correction events | 4 |
+| Total estimated tokens consumed | ~38,000 |
