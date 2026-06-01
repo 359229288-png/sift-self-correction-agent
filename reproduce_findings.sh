@@ -83,59 +83,68 @@ done
 echo "Key executables with Prefetch records:" | tee -a "${OUT}/summary.txt"
 awk '{print "  " $NF}' "${OUT}/05_key_prefetch.txt" 2>/dev/null | sort -u | tee -a "${OUT}/summary.txt"
 
-# ====== Step 6: istat on key Prefetch files (find inodes from recursive listing) ======
+# ====== Step 6: Prefetch Timestamps (istat) ======
+# Dynamically extract inodes from fls output, then run istat.
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 6: Prefetch Timestamps (istat) ===" | tee -a "${OUT}/summary.txt"
 echo "" > "${OUT}/06_istat_results.txt"
+FLS="${OUT}/03_fls_recursive.txt"
 for exe in SDELETE RDPCLIP MSTSC SCHTASKS NETSH REGSVR32 DROPBOXUNINSTALLER RUNDLL32; do
-    grep -i "${exe}" "${OUT}/05_all_prefetch.txt" | while read -r line; do
-        INODE=$(echo "${line}" | awk '{print $2}' | tr -d ':-')
-        FNAME=$(echo "${line}" | awk '{print $NF}')
-        if [ -n "${INODE}" ]; then
-            echo "=== ${FNAME} (inode ${INODE}) ===" >> "${OUT}/06_istat_results.txt"
-            sudo istat -f ntfs "${DEV}" "${INODE}" >> "${OUT}/06_istat_results.txt" 2>/dev/null || echo "(istat failed)" >> "${OUT}/06_istat_results.txt"
-            echo "" >> "${OUT}/06_istat_results.txt"
-        fi
-    done
+    INODE=$(grep -i "${exe}" "${FLS}" | head -1 | awk '{print $2}' | tr -d ':-' || true)
+    FNAME=$(grep -i "${exe}" "${FLS}" | head -1 | awk '{print $NF}' || true)
+    if [ -n "${INODE}" ] && [ -n "${FNAME}" ]; then
+        echo "=== ${FNAME} (inode ${INODE}) ===" >> "${OUT}/06_istat_results.txt"
+        sudo istat -f ntfs "${DEV}" "${INODE}" >> "${OUT}/06_istat_results.txt" 2>/dev/null || echo "(istat failed)" >> "${OUT}/06_istat_results.txt"
+        echo "" >> "${OUT}/06_istat_results.txt"
+    fi
 done
 # Extract just the created timestamps for the summary
 echo "Created timestamps:" | tee -a "${OUT}/summary.txt"
 grep -B1 "Created:" "${OUT}/06_istat_results.txt" | grep -E "(inode|Created:)" | paste - - | tee -a "${OUT}/summary.txt" || echo "(no istat results)" | tee -a "${OUT}/summary.txt"
 
 # ====== Step 7: Prefetch MAM header check ======
+# Use the simplest possible pipeline: icat → head -c.
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 7: Prefetch MAM Header ===" | tee -a "${OUT}/summary.txt"
-PF_SAMPLE=$(grep -i "CHROME.*\.pf" "${OUT}/05_all_prefetch.txt" | head -1 | awk '{print $2}' | tr -d ':-')
-if [ -n "${PF_SAMPLE}" ]; then
-    HEADER=$(sudo icat -f ntfs "${DEV}" "${PF_SAMPLE}" 2>/dev/null | head -c 4 || true)
-    echo "Header: $(echo -n "${HEADER}" | xxd | head -1)" | tee -a "${OUT}/summary.txt"
+PF_INODE=$(grep -i "CHROME.*\.pf" "${OUT}/03_fls_recursive.txt" | head -1 | awk '{print $2}' | tr -d ':-' || true)
+if [ -n "${PF_INODE}" ]; then
+    HEADER=$(sudo icat -f ntfs "${DEV}" "${PF_INODE}" 2>/dev/null | head -c 4 || true)
     if [ "${HEADER}" = "MAM" ]; then
-        echo "→ MAM = compressed Prefetch (Win10 1809+, normal behavior)" | tee -a "${OUT}/summary.txt"
+        echo "OK: MAM header confirmed (Win10 1809+ compressed)" | tee -a "${OUT}/summary.txt"
     elif [ "${HEADER}" = "SCCA" ]; then
-        echo "→ SCCA = uncompressed Prefetch (pre-1809)" | tee -a "${OUT}/summary.txt"
+        echo "OK: SCCA header (uncompressed, pre-1809)" | tee -a "${OUT}/summary.txt"
     else
-        echo "→ Unexpected header" | tee -a "${OUT}/summary.txt"
+        echo "Header: '${HEADER}' (unexpected or empty)" | tee -a "${OUT}/summary.txt"
     fi
+else
+    echo "No Prefetch CHROME file found for MAM check" | tee -a "${OUT}/summary.txt"
 fi
 
 # ====== Step 8: Recycle Bin ======
+# Temporarily disable set -u to handle empty grep results.
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 8: Recycle Bin ===" | tee -a "${OUT}/summary.txt"
-grep -i "\\\$R\|\\\$I" "${OUT}/03_fls_recursive.txt" 2>/dev/null > "${OUT}/08_recycle_bin.txt" || echo "(none)" > "${OUT}/08_recycle_bin.txt"
-echo "Recycle Bin entries: $(wc -l < "${OUT}/08_recycle_bin.txt")" | tee -a "${OUT}/summary.txt"
+set +u
+FLS="${OUT}/03_fls_recursive.txt"
+grep -i \$R "${FLS}" > "${OUT}/08_recycle_R.txt" 2>/dev/null
+R_COUNT=$(wc -l < "${OUT}/08_recycle_R.txt" 2>/dev/null || echo 0)
+grep -i \$I "${FLS}" > "${OUT}/08_recycle_I.txt" 2>/dev/null
+I_COUNT=$(wc -l < "${OUT}/08_recycle_I.txt" 2>/dev/null || echo 0)
+echo "\$R files: ${R_COUNT} | \$I files: ${I_COUNT}" | tee -a "${OUT}/summary.txt"
 
-# Extract $I file metadata
-echo "" > "${OUT}/08_recycle_metadata.txt"
-grep -i "\\\$I" "${OUT}/08_recycle_bin.txt" | head -10 | while read -r line; do
-    INODE=$(echo "${line}" | awk '{print $2}' | tr -d ':-')
-    FNAME=$(echo "${line}" | awk '{print $NF}')
-    if [ -n "${INODE}" ]; then
-        echo "--- ${FNAME} (inode ${INODE}) ---" >> "${OUT}/08_recycle_metadata.txt"
-        sudo icat -f ntfs "${DEV}" "${INODE}" 2>/dev/null | strings -e l | head -5 >> "${OUT}/08_recycle_metadata.txt" || true
-    fi
-done
-echo "First $I metadata:" | tee -a "${OUT}/summary.txt"
-head -10 "${OUT}/08_recycle_metadata.txt" 2>/dev/null | tee -a "${OUT}/summary.txt"
+# Extract $I metadata
+if [ "${I_COUNT}" -gt 0 ]; then
+    while read -r line; do
+        INODE=$(echo "${line}" | awk '{print $2}' | tr -d ':-')
+        FNAME=$(echo "${line}" | awk '{print $NF}' 2>/dev/null || echo "(unknown)")
+        if [ -n "${INODE}" ]; then
+            echo "--- ${FNAME} (inode ${INODE}) ---" >> "${OUT}/08_recycle_metadata.txt"
+            sudo icat -f ntfs "${DEV}" "${INODE}" 2>/dev/null | strings -e l | head -3 >> "${OUT}/08_recycle_metadata.txt" || true
+        fi
+    done < "${OUT}/08_recycle_I.txt"
+fi
+head -10 "${OUT}/08_recycle_metadata.txt" >> "${OUT}/summary.txt" 2>/dev/null || true
+set -u
 
 # ====== Step 9: Registry NTUSER.DAT location ======
 echo "" | tee -a "${OUT}/summary.txt"
