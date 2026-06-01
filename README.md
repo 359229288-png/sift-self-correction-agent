@@ -63,6 +63,7 @@ This project uses **Direct Agent Extension** architecture:
     Instruct your agent to SSH to SIFT and analyze the case data in /cases/.
 
 ## Key Features
+![Attack Timeline](attack_timeline.png)
  ·Self-Correction Loop: Agent checks its own findings for hallucinations, inconsistencies, and missed artifacts before finalizing a report.
  ·Honest Uncertainty: Confirmed findings are clearly distinguished from inferences; skipped analyses are honestly recorded.
  ·Experimental Methodology: Inspired by data science competition workflows — control variables, baseline comparison, iterative testing.
