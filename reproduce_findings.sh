@@ -89,10 +89,12 @@ echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 6: Prefetch Timestamps (istat) ===" | tee -a "${OUT}/summary.txt"
 echo "" > "${OUT}/06_istat_results.txt"
 FLS="${OUT}/03_fls_recursive.txt"
+# fls output format: ++ r/r INODE:\\tFILENAME  (tab-separated, inode = field 3)
 for exe in SDELETE RDPCLIP MSTSC SCHTASKS NETSH REGSVR32 DROPBOXUNINSTALLER RUNDLL32; do
-    INODE=$(grep -i "${exe}" "${FLS}" | head -1 | awk '{print $2}' | tr -d ':-' || true)
-    FNAME=$(grep -i "${exe}" "${FLS}" | head -1 | awk '{print $NF}' || true)
-    if [ -n "${INODE}" ] && [ -n "${FNAME}" ]; then
+    MATCH=$(grep -i "${exe}" "${FLS}" | head -1 || true)
+    if [ -n "${MATCH}" ]; then
+        INODE=$(echo "${MATCH}" | awk '{print $3}' | tr -d ':-')
+        FNAME=$(echo "${MATCH}" | awk '{print $NF}')
         echo "=== ${FNAME} (inode ${INODE}) ===" >> "${OUT}/06_istat_results.txt"
         sudo istat -f ntfs "${DEV}" "${INODE}" >> "${OUT}/06_istat_results.txt" 2>/dev/null || echo "(istat failed)" >> "${OUT}/06_istat_results.txt"
         echo "" >> "${OUT}/06_istat_results.txt"
@@ -106,7 +108,7 @@ grep -B1 "Created:" "${OUT}/06_istat_results.txt" | grep -E "(inode|Created:)" |
 # Use the simplest possible pipeline: icat → head -c.
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 7: Prefetch MAM Header ===" | tee -a "${OUT}/summary.txt"
-PF_INODE=$(grep -i "CHROME.*\.pf" "${OUT}/03_fls_recursive.txt" | head -1 | awk '{print $2}' | tr -d ':-' || true)
+PF_INODE=$(grep -i "CHROME.*\.pf" "${OUT}/03_fls_recursive.txt" | head -1 | awk '{print $3}' | tr -d ':-' || true)
 if [ -n "${PF_INODE}" ]; then
     HEADER=$(sudo icat -f ntfs "${DEV}" "${PF_INODE}" 2>/dev/null | head -c 4 || true)
     if [ "${HEADER}" = "MAM" ]; then
@@ -155,8 +157,12 @@ cat "${OUT}/09_ntuser_list.txt" | tee -a "${OUT}/summary.txt"
 # ====== Step 10: Event Log check ======
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 10: Event Log Check ===" | tee -a "${OUT}/summary.txt"
-grep -i "\.evtx" "${OUT}/03_fls_recursive.txt" 2>/dev/null | head -10 > "${OUT}/10_evtx_list.txt"
-cat "${OUT}/10_evtx_list.txt" | tee -a "${OUT}/summary.txt"
+grep -i "evtx" "${OUT}/03_fls_recursive.txt" 2>/dev/null | head -10 > "${OUT}/10_evtx_list.txt"
+if [ -s "${OUT}/10_evtx_list.txt" ]; then
+    cat "${OUT}/10_evtx_list.txt" | tee -a "${OUT}/summary.txt"
+else
+    echo "(no .evtx files found — may be in NTFS-compressed region)" | tee -a "${OUT}/summary.txt"
+fi
 
 # ====== Summary ======
 echo "" | tee -a "${OUT}/summary.txt"
