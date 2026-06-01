@@ -93,7 +93,7 @@ FLS="${OUT}/03_fls_recursive.txt"
 for exe in SDELETE RDPCLIP MSTSC SCHTASKS NETSH REGSVR32 DROPBOXUNINSTALLER RUNDLL32; do
     MATCH=$(grep -i "${exe}" "${FLS}" | head -1 || true)
     if [ -n "${MATCH}" ]; then
-        INODE=$(echo "${MATCH}" | awk '{print $3}' | tr -d ':-')
+        INODE=$(echo "${MATCH}" | awk '{print $3}' | cut -d'-' -f1)
         FNAME=$(echo "${MATCH}" | awk '{print $NF}')
         echo "=== ${FNAME} (inode ${INODE}) ===" >> "${OUT}/06_istat_results.txt"
         sudo istat -f ntfs "${DEV}" "${INODE}" >> "${OUT}/06_istat_results.txt" 2>/dev/null || echo "(istat failed)" >> "${OUT}/06_istat_results.txt"
@@ -108,7 +108,8 @@ grep -B1 "Created:" "${OUT}/06_istat_results.txt" | grep -E "(inode|Created:)" |
 # Use the simplest possible pipeline: icat → head -c.
 echo "" | tee -a "${OUT}/summary.txt"
 echo "=== Step 7: Prefetch MAM Header ===" | tee -a "${OUT}/summary.txt"
-PF_INODE=$(grep -i "CHROME.*\.pf" "${OUT}/03_fls_recursive.txt" | head -1 | awk '{print $3}' | tr -d ':-' || true)
+# Use first available .pf file for MAM check
+PF_INODE=$(grep -i "\.pf$" "${OUT}/03_fls_recursive.txt" | grep -vi "SY_____\|zx_____\|zy_____" | head -1 | awk '{print $3}' | cut -d'-' -f1 || true)
 if [ -n "${PF_INODE}" ]; then
     HEADER=$(sudo icat -f ntfs "${DEV}" "${PF_INODE}" 2>/dev/null | head -c 4 || true)
     if [ "${HEADER}" = "MAM" ]; then
