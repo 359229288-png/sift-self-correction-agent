@@ -35,6 +35,33 @@
 
 ### 关键发现
 - **外部驱动器F:和G:包含SRL项目文件副本** 🔴
+
+## 2026-06-02 13:52 — 全量报告推送 GitHub
+
+**操作**：将 ROCBA-001 完整取证分析结果推送到 GitHub
+
+### 推送内容
+- **远程已有**（英文版）：
+  - README.md — 项目主页
+  - ONEPAGER.md — 项目一览
+  - analysis_report.md — 英文分析报告
+  - analysis_report.cn.md — 中文分析报告
+  - accuracy_report.md — 英文准确性报告
+  - execution_log.md — 执行日志
+  - reproduce_findings.sh — 可重现性脚本
+  - self_correction_agent_prompt.md — Agent Prompt
+  - dataset_documentation.md — 数据集文档
+  - LICENSE
+  - skills/ — 5个技能包
+  - architecture.png, attack_timeline.png — 架构图
+- **本次新提交**：
+  - CHANGELOG.md — 项目日志
+  - notes/registry-analysis.md — Registry 补充分析
+
+### 仓库
+- `git@github.com:cheng-lin-max/sift-self-correction-agent.git`
+- 分支: main
+- Commit: 2185893
   - `F:\Files from SRL system\The Future of KITT.pptx`
   - `F:\Files of interest\...` (Megaforce, Recovered Documents)
   - `G:\My Drive\STARK-RESEARCH-LABS FOLDER\` (Google Drive同步)
