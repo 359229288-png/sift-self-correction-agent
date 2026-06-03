@@ -19,6 +19,13 @@ This project uses **Direct Agent Extension** architecture:
 - **Prompt-based guardrails**: Agent instructions enforce read-only tool usage and mandatory self-correction.
 - See `architecture.png` for detailed component diagram.
 
+
+## Self-Correction Workflow
+
+![Self-Correction Flowchart](self_correction_flowchart.png)
+
+The Agent follows a mandatory three-phase workflow: Initial Analysis → Mandatory Self-Review (Authenticity, Consistency, Completeness checks) → Corrected Report. If errors are found during Self-Review, the Agent returns to Analysis for correction before generating the final report.
+
 ## Project Structure
 ├── self_correction_agent_prompt.md # Core agent system instructions
 ├── skills/ # Protocol SIFT skill packs (5 skills)
